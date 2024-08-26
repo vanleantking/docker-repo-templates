@@ -1,0 +1,38 @@
+version: "3.9"
+services:
+    api-backend:
+        build:
+            context: '.'
+            dockerfile: 'docker/golang/Dockerfile'
+        env_file: .env
+        ports:
+            - "$FIBER_PORT:$FIBER_PORT"
+        environment:
+            - MONGO_HOST='mongodb_exam'
+            - MONGO_PORT='27017'
+            - MONGO_USERNAME='user123'
+            - MONGO_PASSWORD='pw123'
+            - MONGO_DATABASE='mongodb_exam'
+            - FIBER_PORT="${FIBER_PORT}"
+        depends_on:
+            - 'mongodb_exam'
+        networks:
+            - ad-server
+    mongodb_exam:
+        image: 'mongo:5.0'
+        container_name: 'mongodb_exam'
+        volumes:
+            - ./docker/mongodb/data:/data/db
+            - ./docker/mongodb/init/:/docker-entrypoint-initdb.d/
+        restart: always
+        ports:
+            - '40001:27017'
+        environment:
+            MONGO_INITDB_ROOT_USERNAME: root
+            MONGO_INITDB_ROOT_PASSWORD: root
+            MONGO_INITDB_DATABASE: admin
+        networks:
+            - ad-server
+networks:
+    ad-server:
+      driver: bridge
