@@ -14,10 +14,12 @@
  <a id="laravel"></a>
  ### Laravel
  ***Tech stack***
-- nginx
-- php 7.4 include nodejs installed
-- postgre
-- mysql
+- nginx stable-alpine
+- php 7.4 && nodejs 18 included
+- worker on supervisord
+- postgre 15
+- mysql 8
+- redis 7.2.4
  
  <a id="python"></a>
  ### Python

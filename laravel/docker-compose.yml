@@ -1,0 +1,73 @@
+version: '3'
+services:
+    # nginx
+    web:
+        image: nginx:stable-alpine
+        ports:
+            - '$WEB_PORT_CONTAINER_EXPOSE:80'
+        volumes:
+            - ./src:/var/www
+            - ./docker/nginx/templates:/etc/nginx/templates
+        environment:
+            ENABLE_FASTCGI_PARAM_NGINX_HTTPS: $ENABLE_FASTCGI_PARAM_NGINX_HTTPS
+        depends_on:
+            - app
+            - db
+        networks:
+            - app-kol-network
+    # php
+    app:
+        build:
+            context: .
+            dockerfile: ./docker/php/Dockerfile
+        ports:
+            - '$APP_PORT_CONTAINER_EXPOSE:9000'
+        volumes:
+            - ./src:/var/www
+            - ./docker/php/custom-php.ini:/usr/local/etc/php/conf.d/custom-php.ini
+        networks:
+            - app-kol-network
+    # Lavavel Worker run by suppervisor
+    worker:
+        build:
+            context: .
+            dockerfile: ./docker/php/Dockerfile.worker
+        volumes:
+            - .:/var/www/
+        working_dir: /var/www/
+        networks:
+            - app-kol-network
+    db:
+        image: postgres:15
+        ports:
+            - '$DB_PORT_CONTAINER_EXPOSE:5432'
+        environment:
+            POSTGRES_USER: $DB_USERNAME
+            POSTGRES_PASSWORD: $DB_PASSWORD
+            POSTGRES_DB: $DB_DATABASE
+            POSTGRES_PORT: $DB_PORT
+            POSTGRES_HOST: $DB_HOST
+            POSTGRES_SSLMODE: disable
+        volumes:
+            - ./docker/postgres/postgres-data:/var/lib/postgresql/data
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U postgres"]
+            interval: 5s
+            timeout: 5s
+            retries: 5
+        networks:
+            - app-kol-network
+
+    redis:
+        image: redis:7.2.4
+        volumes:
+            - ./docker/redis:/etc/redis
+        command: ['redis-server', '/etc/redis/redis.conf']
+        ports:
+            - '$REDIS_PORT_CONTAINER_EXPOSE:6379'
+        networks:
+            - app-kol-network
+
+networks:
+    app-kol-network:
+
